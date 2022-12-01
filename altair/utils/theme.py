@@ -7,22 +7,20 @@ ThemeType = Callable[..., dict]
 
 
 class ThemeRegistry(PluginRegistry[ThemeType]):
-    # The name could be update / edit / modify
     # TODO how to make a useful docstring listing all params?
-    # docs mention that **config can be passed
-    # does this need to accept the **options kwds?? then we can't use **kwds which is convenient here, maybe optins_dict?
-    # also add scaling of all graphical elements?
     # Could fonts be partial points? Otherwise always round down?
-    # if this is added in VL in the future, we can likely keep this interface the same, forward compatible
-    def modify(self, font_scale=None, **config):
+    def modify(self, font_scale=None):
+        current_state = self._get_state()
+        config = {**current_state["_options"], **current_state["_global_settings"]}
+        
         if font_scale is not None:
-            config = self._scale_font()
+            config = self._scale_font(config)
 
         # Register the modified theme under a new name
         if self.active.split("_")[-1] == "modified":
             updated_theme_name = self.active
         else:
-            updated_theme_name = "{}_modified".format(self.active)
+            updated_theme_name = f"{self.active}_modified"
         self.register(updated_theme_name, lambda: {"config": config})
 
         # Enable the newly registered theme
