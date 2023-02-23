@@ -30,8 +30,18 @@ jobs:
         run: |
           python tools/generate_schema_wrapper.py
           files=`git ls-files --deleted --modified --others --exclude-standard`
-          if [ ${#files[@]} -gt 0 ]; then
-              echo "The code generation modified the files:"
+          files_cleaned=()
+          # Loop over the array, add only non-empty values to the new array
+          for i in "${files[@]}"; do
+            # Skip null items
+            if [ -z "$i" ]; then
+              continue
+            fi
+            # Add the rest of the elements to a new array
+            files_cleaned+=("${i}")
+          done
+          if [ ${#files_cleaned[@]} -gt 0 ]; then
+              echo "The code generation modified the following files:"
               echo $files
               exit 1
           fi
