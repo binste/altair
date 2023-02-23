@@ -31,7 +31,8 @@ jobs:
           python tools/generate_schema_wrapper.py
           files=`git ls-files --deleted --modified --others --exclude-standard`
           if [ ${#files[@]} -gt 0 ]; then
-              echo "The code generation modified files"
+              echo "The code generation modified the files:"
+              echo $files
               exit 1
           fi
       - name: Test with pytest
