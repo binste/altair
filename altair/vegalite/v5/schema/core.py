@@ -5546,6 +5546,8 @@ class FacetedEncoding(VegaLiteSchema):
         For arc marks, the arc length in radians if theta2 is not specified, otherwise the
         start arc angle. (A value of 0 indicates up or “north”, increasing values proceed
         clockwise.)
+        
+        
 
         For text marks, polar coordinate angle in radians.
     theta2 : :class:`Position2Def`
