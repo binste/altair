@@ -26,11 +26,11 @@ Interactive charts can use one or more of these elements to create rich interact
 Parameters: Building Blocks of Interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Interactivity in Altair is built around *parameters*, of which there are two types: variables and selections.  We introduce these concepts through a series examples.
+Interactivity in Altair is built around *parameters*, of which there are two types: *variables* and *selections*.  We introduce these concepts through a series examples.
 
 .. note::
 
-   This material was changed considerably with the release of Altair 5.  In particular, Altair 4 had selections but not variables, and the term ``parameter`` first appeared in Altair 5.
+   This material was changed considerably with the release of Altair 5.  In particular, Altair 4 had selections but not variables, and the term "parameter" first appeared in Altair 5.
 
 .. _basic variable:
 
@@ -512,7 +512,7 @@ depending on the size and position of the selection in the scatter plot.
 
     brush = alt.selection_interval()
 
-    points = alt.Chart(cars).mark_circle().encode(
+    points = alt.Chart(cars).mark_point().encode(
         x='Horsepower:Q',
         y='Miles_per_Gallon:Q',
         color='Origin:N'
@@ -531,43 +531,15 @@ depending on the size and position of the selection in the scatter plot.
     points & bars
 
 
-Binding: Adding Data Driven Inputs
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-With an understanding of the selection types and conditions, you can now add data-driven input elements to the charts using the ``bind`` option. As specified by `Vega-lite binding <https://vega.github.io/vega-lite/docs/bind.html#input-element-binding>`_, selections can be bound two-ways:
+Binding: Adding Widgets to Drive Interactivity
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+With an understanding of the selection types and conditions, you can now add data-driven and logic-driven widgets (or "bindings") as input elements to the charts using the ``bind`` option. As specified by `Vega-lite binding <https://vega.github.io/vega-lite/docs/bind.html#input-element-binding>`_, bindings can be of three types:
 
-1. Point selections can be bound directly to an input element, *for example, a radio button.*
-2. Interval selections which can be bound to scale, *for example, zooming in on a map.*
+1. Point and interval selections can be used for data-driven interactive elements, such as highlighting and filtering based on values in the data.
+2. Sliders and checkboxes can be used for logic-driven interactive elements, such as highlighting and filtering based on the absolute values in these widgets.
+3. Interval selections can be bound to a scale, such as zooming in on a map.
 
-Input Element Binding
-^^^^^^^^^^^^^^^^^^^^^
-With point selections, an input element can be added to the chart to establish a binding between the input and the selection.
-
-For instance, using our example from above a dropdown can be used to highlight cars from a specific ``origin`` :
-
-.. altair-plot::
-
-    input_dropdown = alt.binding_select(options=['Europe','Japan','USA'], name='Region ')
-    selection = alt.selection_point(fields=['Origin'], bind=input_dropdown)
-    color = alt.condition(selection,
-                        alt.Color('Origin:N', legend=None),
-                        alt.value('lightgray'))
-
-    alt.Chart(cars).mark_point().encode(
-        x='Horsepower:Q',
-        y='Miles_per_Gallon:Q',
-        color=color,
-        tooltip='Name:N'
-    ).add_params(
-        selection
-    )
-
-
-
-
-The above example shows all three elements at work. The ``input_dropdown`` is ``bind`` to the ``selection`` which is called from the ``condition`` encoded through the data.
-
-The following are the input elements supported in vega-lite:
-
+The following table summarizes the input elements that are supported in Vega-Lite:
 
 ========================= ===========================================================================  ===============================================
 Input Element             Description                                                                   Example
@@ -579,17 +551,48 @@ Input Element             Description                                           
 ========================= ===========================================================================  ===============================================
 
 
-Bindings and input elements can also be used to filter data on the client side. Reducing noise in the chart and allowing the user to see just certain selected elements:
+Data-Driven Input Element Binding
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+With point selections, an input element can be added to the chart to establish a binding between the input and the selection. For instance, using our example from above, a dropdown can be used to highlight cars from a specific ``origin``:
 
 .. altair-plot::
 
     input_dropdown = alt.binding_select(options=['Europe','Japan','USA'], name='Region ')
     selection = alt.selection_point(fields=['Origin'], bind=input_dropdown)
+    color = alt.condition(
+        selection,
+        alt.Color('Origin:N', legend=None),
+        alt.value('lightgray')
+    )
 
     alt.Chart(cars).mark_point().encode(
         x='Horsepower:Q',
         y='Miles_per_Gallon:Q',
-        color='Origin:N',
+        color=color,
+        tooltip='Name:N'
+    ).add_params(
+        selection
+    )
+
+The above example shows all three elements at work. We  ``bind`` the ``input_dropdown`` to the ``selection`` which is called from the ``condition`` encoded through the data.
+
+Bindings and input elements can also be used to filter data on the client side. Reducing noise in the chart and allowing the user to see just certain selected elements:
+
+.. altair-plot::
+
+    # Make radio button less cramped by adding a space after each label
+    options = ['Europe', 'Japan', 'USA']
+    labels = [option + ' ' for option in options]
+
+    input_dropdown = alt.binding_radio(options=options, labels=labels, name='Region: ')
+    selection = alt.selection_point(fields=['Origin'], bind=input_dropdown)
+
+    alt.Chart(cars).mark_point().encode(
+        x='Horsepower:Q',
+        y='Miles_per_Gallon:Q',
+        # We need to set a constant domain to preserve the colors
+        # when only one region is shown at a time
+        color=alt.Color('Origin:N', scale=alt.Scale(domain=options)),
         tooltip='Name:N'
     ).add_params(
         selection
@@ -597,6 +600,104 @@ Bindings and input elements can also be used to filter data on the client side. 
         selection
     )
 
+Logic-Driven Input Element Binding
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+So far we have seen the use of selections to match values in our data.
+When using checkbox bindings,
+we want to instead use the state of the checkbox as a True/False condition
+and execute some action depending on whether it is checked or not.
+When we are using a checkbox as a toggle like this,
+we need to use `param` instead of `selection_point`,
+since we don't want to check if there are True/False values in our data,
+just if the value of the check box is True (checked) or False (unchecked):
+
+.. altair-plot::
+
+    bind_checkbox = alt.binding_checkbox(name='Scale point size by "Acceleration": ')
+    param_checkbox = alt.param(bind=bind_checkbox)
+
+    alt.Chart(cars).mark_point().encode(
+        x='Horsepower:Q',
+        y='Miles_per_Gallon:Q',
+        size=alt.condition(
+            param_checkbox,
+            alt.Size('Acceleration:Q'),
+            alt.value(25)
+        )
+    ).add_params(
+        param_checkbox
+    )
+
+Similarly, if we want to create a condition
+where we use the value of a slider
+we can use `param` like so:
+
+.. altair-plot::
+
+    import numpy as np
+    import pandas as pd
+
+
+    rand = np.random.RandomState(42)
+    df = pd.DataFrame({
+        'xval': range(100),
+        'yval': rand.randn(100).cumsum()
+    })
+
+    slider = alt.binding_range(min=0, max=100, step=1, name='Cutoff ')
+    selector = alt.param(name='SelectorName', value=50, bind=slider)
+
+    alt.Chart(df).mark_point().encode(
+       x='xval',
+       y='yval',
+       color=alt.condition(
+           alt.datum.xval < selector,
+           # 'datum.xval < SelectorName',  # An equivalent alternative
+           alt.value('red'), alt.value('blue')
+       )
+    ).add_params(
+       selector
+    )
+
+In this case we could also have used a selection
+as selection values can be accessed directly and used in expressions that affect the
+chart. For example, here we create a slider to choose a cutoff value, and color
+points based on whether they are smaller or larger than the value:
+
+.. altair-plot::
+
+    slider = alt.binding_range(min=0, max=100, step=1, name='Cutoff ')
+    selector = alt.selection_point(
+        name="SelectorName",
+        fields=['cutoff'],
+        bind=slider,
+        value=[{'cutoff': 50}]
+    )
+
+    alt.Chart(df).mark_point().encode(
+        x='xval',
+        y='yval',
+        color=alt.condition(
+            alt.datum.xval < selector.cutoff,
+            # 'datum.xval < SelectorName.cutoff',  # An equivalent alternative
+            alt.value('red'), alt.value('blue')
+        )
+    ).add_params(
+        selector
+    )
+
+While it can be useful to know
+how to access selection values
+in expression strings,
+using the parameters syntax introduced in Altair 5
+often provides a more convenient syntax
+for simple interactions like this one
+since they can also be accessed in expression strings
+as we saw above.
+Selections and parameters can be used anywhere where expressions are valid, for
+example, in a :ref:`user-guide-calculate-transform` or a
+:ref:`user-guide-filter-transform` transform.
 
 Scale Binding
 ^^^^^^^^^^^^^
@@ -615,78 +716,76 @@ With interval selections, the ``bind`` property can be set to the value of ``"sc
         selection
     )
 
+Expressions for Interaction
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Parameter Values in Expressions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Altair allows custom interactions by utilizing the expression language of Vega for writing basic formulas. A Vega expression string is a well-defined set of JavaScript-style operations.
+To simplify building these expressions in Python, Altair provides the ``expr`` module, which offers constants and functions to construct expressions using Python syntax. Both JavaScript-syntax and Python-syntax are supported within Altair to define an expression,
+and you can see an introductory example of each in the :ref:`user-guide-calculate-transform` transform documentation.
 
-Selection Parameters
-^^^^^^^^^^^^^^^^^^^^
-
-Selection values can be accessed directly and used in expressions that affect the
-chart. For example, here we create a slider to choose a cutoff value, and color
-points based on whether they are smaller or larger than the value:
-
-.. altair-plot::
-
-   import altair as alt
-   import pandas as pd
-   import numpy as np
-
-   rand = np.random.RandomState(42)
-
-   df = pd.DataFrame({
-       'xval': range(100),
-       'yval': rand.randn(100).cumsum()
-   })
-
-   slider = alt.binding_range(min=0, max=100, step=1, name='Cutoff ')
-   selector = alt.selection_point(name="SelectorName", fields=['cutoff'],
-                                   bind=slider, value=[{'cutoff': 50}])
-
-   alt.Chart(df).mark_point().encode(
-       x='xval',
-       y='yval',
-       color=alt.condition(
-           alt.datum.xval < selector.cutoff,
-           # 'datum.xval < SelectorName.cutoff',  # An equivalent alternative
-           alt.value('red'), alt.value('blue')
-       )
-   ).add_params(
-       selector
-   )
-
-Selector values can be similarly used anywhere that expressions are valid, for
-example, in a :ref:`user-guide-calculate-transform` or a
-:ref:`user-guide-filter-transform`.
-
-Variable Parameters
-^^^^^^^^^^^^^^^^^^^
-
-While it is useful to know
-how to access selection parameter values
-in expression strings,
-the variable parameters introduced in Altair 5
-often provides a more convenient syntax
-for simple interactions like this one
-since they can also be accessed in expression strings:
+In the following example, we define a range connected to a parameter named ``width``. We then assign two expressions via ``param`` using both JavaScript and Python-syntax.
+Using these two expressions defined as a parameter, we can connect them to an encoding channel option, such as the title color of the axis. If the width is below ``200``, then the color is ``red``; otherwise, the color is ``blue``.
 
 .. altair-plot::
 
-    slider = alt.binding_range(min=0, max=100, step=1, name='Cutoff ')
-    selector = alt.param(name='SelectorName', value=50, bind=slider)
+    bind_range = alt.binding_range(min=100, max=300, name='Slider value:  ')
+    param_width = alt.param(bind=bind_range)
 
-    alt.Chart(df).mark_point().encode(
-       x='xval',
-       y='yval',
-       color=alt.condition(
-           alt.datum.xval < selector,
-           # 'datum.xval < SelectorName',  # An equivalent alternative
-           alt.value('red'), alt.value('blue')
-       )
+    param_color_js_expr = alt.param(expr=f"{param_width.name} < 200 ? 'red' : 'black'")
+    param_color_py_expr = alt.param(expr=alt.expr.if_(param_width < 200, 'red', 'black'))
+
+    chart = alt.Chart(df).mark_point().encode(
+        x=alt.X('xval').axis(titleColor=param_color_js_expr),
+        y=alt.Y('yval').axis(titleColor=param_color_py_expr)
     ).add_params(
-       selector
+        param_width, 
+        param_color_js_expr, 
+        param_color_py_expr
+    )
+    chart
+
+In this example, we use a JavaScript-style ternary operator ``f"{param_width.name} < 200 ? 'red' : 'blue'"`` which is equivalent to the Python function ``expr.if_(param_width < 200, 'red', 'blue')``.
+The expressions defined as parameters also need to be added to the chart within ``.add_params()`` to be usable within the chart.
+
+Expressions can be included within a chart specification using two approaches. One approach is to assign an expression within a parameter definition, as shown above.
+The second approach is to use an inline expression using the ``expr()`` utility function.
+Here, we modify the chart above to change the size of the points based on an inline expression. Instead of creating a conditional statement, we use the value of the expression as the size directly and therefore only need to specify the name of the parameter.
+
+.. altair-plot::
+
+    chart.mark_point(size=alt.expr(param_width.name))
+
+Inline expressions defined by ``expr(...)`` are not parameters and, therefore, do not need to be added within the ``add_params``.
+
+Another option to include an expression within a chart specification is as a value definition to an encoding channel. Here, we make the exact same modification to the chart as in the previous example via this alternate approach:
+
+.. altair-plot::
+
+    chart.encode(size=alt.value(alt.expr(param_width.name)))
+
+`Some parameter names have special meaning in Vega-Lite <https://vega.github.io/vega-lite/docs/parameter.html#built-in-variable-parameters>`_, for example, naming a parameter ``width`` will automatically link it to the width of the chart. In the example below, we also modify the chart title to show the value of the parameter:
+
+.. altair-plot::
+    bind_range = alt.binding_range(min=100, max=300, name='Chart width: ')
+    param_width = alt.param('width', bind=bind_range)
+    
+    # In Javascript, a number is converted to a string when added to an existing string,
+    # which is why we use this nested quotation.
+    title=alt.Title(alt.expr(f'"This chart is " + {param_width.name} + " px wide"'))
+    alt.Chart(df, title=title).mark_point().encode(
+        x=alt.X('xval'),
+        y=alt.Y('yval')
+    ).add_params(
+        param_width,
     )
 
+To summarize expressions:
+
+- Altair can utilize the expression language of Vega for writing basic formulas to enable custom interactions.
+- Both JavaScript-style syntax and Python-style syntax are supported in Altair to define expressions.
+- Altair provides the ``expr`` module which allows expressions to be constructed with Python syntax.
+- Expressions can be included within a chart specification using two approaches: through a ``param(expr=...)`` parameter definition or inline using the ``expr(...)`` utility function.
+- Expressions can be used anywhere the documentation mentions that an `ExprRef` is an accepted value. This is mainly in three locations within a chart specification: mark properties, encoding channel options, and within a value definition for an encoding channel. They are also supported in the chart title, but not yet for subtitles or guide titles (i.e. axis and legends, see https://github.com/vega/vega-lite/issues/7408 for details).
 
 Further Examples
 ~~~~~~~~~~~~~~~~

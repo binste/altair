@@ -1,5 +1,5 @@
 # flake8: noqa
-__version__ = "4.3.0.dev0"
+__version__ = "5.0.0dev"
 
 
 # The content of __all__ is automatically written by
@@ -450,6 +450,7 @@ __all__ = [
     "TopLevelHConcatSpec",
     "TopLevelLayerSpec",
     "TopLevelMixin",
+    "TopLevelParameter",
     "TopLevelRepeatSpec",
     "TopLevelSelectionParameter",
     "TopLevelSpec",
@@ -561,7 +562,6 @@ __all__ = [
     "repeat",
     "sample",
     "schema",
-    "selection",
     "selection_interval",
     "selection_point",
     "sequence",
