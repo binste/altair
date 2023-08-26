@@ -13,15 +13,17 @@ These are the available time units:
 
 - ``"year"``, ``"yearquarter"``, ``"yearquartermonth"``, ``"yearmonth"``,
   ``"yearmonthdate"``, ``"yearmonthdatehours"``, ``"yearmonthdatehoursminutes"``,
-  ``"yearmonthdatehoursminutesseconds"``.
-- ``"quarter"``, ``"quartermonth"``
-- ``"month"``, ``"monthdate"``
-- ``"date"`` (Day of month, i.e., 1 - 31)
-- ``"day"`` (Day of week, i.e., Monday - Friday)
-- ``"hours"``, ``"hoursminutes"``, ``"hoursminutesseconds"``
-- ``"minutes"``, ``"minutesseconds"``
-- ``"seconds"``, ``"secondsmilliseconds"``
-- ``"milliseconds"``
+  ``"yearmonthdatehoursminutesseconds"``, ``"yearweek"``, ``"yearweekday"``, ``"yearweekdayhours"``, , ``"yearweekdayhoursminutes"``, ``"utcyear"``
+- ``"quarter"``, ``"quartermonth"``, ``"utcquarter"``
+- ``"month"``, ``"monthdate"``, ``"utcmonth"``
+- ``"week"``, ``"utcweek"``
+- ``"date"`` (Day of month, i.e., 1 - 31), ``"utcdate"``
+- ``"day"`` (Day of week, i.e., Monday - Friday), ``"utcday"``
+- ``"dayofyear"`` (Day of year, i.e., 1 - 365), ``"utcdayofyear"``
+- ``"hours"``, ``"hoursminutes"``, ``"hoursminutesseconds"``, ``"utchours"``
+- ``"minutes"``, ``"minutesseconds"``, ``"utcminutes"``
+- ``"seconds"``, ``"secondsmilliseconds"``, ``"utcseconds"``
+- ``"milliseconds"``, ``"utcmilliseconds"``
 
 TimeUnit Within Encoding
 ^^^^^^^^^^^^^^^^^^^^^^^^
